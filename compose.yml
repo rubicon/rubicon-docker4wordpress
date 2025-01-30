@@ -16,15 +16,15 @@ services:
     image: wodby/wordpress-php:$PHP_TAG
     container_name: "${PROJECT_NAME}_php"
     environment:
-      # For PHP 8.2 use busybox sendmail together with "PHP_MAIL_MIXED_LF_AND_CRLF=On".
-      PHP_MAIL_MIXED_LF_AND_CRLF: On
-      PHP_SENDMAIL_PATH: '/bin/busybox sendmail -t -i -S mailhog:25'
-#      PHP_SENDMAIL_PATH: '/bin/busybox sendmail -t -i -S opensmtpd:25'
-#      # For PHP <8.2 use ssmtp instead of sendmail.
-#      SSMTP_MAILHUB: mailhog:1025
-#      SSMTP_MAILHUB: opensmtpd:25
-#      PHP_SENDMAIL_PATH: '"/usr/bin/dos2unix -u | /usr/sbin/ssmtp -t -f"'
-#      #
+      # By default xdebug extension also disabled.
+      PHP_EXTENSIONS_DISABLE: xhprof,spx
+      PHP_MAIL_MIXED_LF_AND_CRLF: "On"
+      # Mailpit:
+      MSMTP_HOST: mailpit
+      MSMTP_PORT: 1025
+      #      # OpenSMTPD:
+      #      MSMTP_HOST: opensmtpd
+      #      MSMTP_PORT: 25
       DB_HOST: $DB_HOST
       DB_USER: $DB_USER
       DB_PASSWORD: $DB_PASSWORD
@@ -32,15 +32,11 @@ services:
       PHP_FPM_USER: wodby
       PHP_FPM_GROUP: wodby
 #      # Read instructions at https://wodby.com/docs/stacks/wordpress/local#xdebug
-#      PHP_XDEBUG: 1
 #      PHP_XDEBUG_MODE: debug
 #      PHP_XDEBUG_MODE: profile
 #      PHP_XDEBUG_USE_COMPRESSION: false
 #      PHP_IDE_CONFIG: serverName=my-ide
 #      PHP_XDEBUG_IDEKEY: "my-ide"
-#      PHP_XDEBUG_CLIENT_HOST: 172.17.0.1 # Linux
-#      PHP_XDEBUG_CLIENT_HOST: host.docker.internal # Docker 18.03+ Mac/Win
-#      PHP_XDEBUG_CLIENT_HOST: 10.0.75.1 # Windows
 #      PHP_XDEBUG_LOG: /tmp/php-xdebug.log
     volumes:
     - ./:/var/www/html:cached
@@ -79,12 +75,12 @@ services:
     labels:
     - "traefik.http.routers.${PROJECT_NAME}_nginx.rule=Host(`${PROJECT_BASE_URL}`)"
 
-  mailhog:
-    image: mailhog/mailhog
-    container_name: "${PROJECT_NAME}_mailhog"
+  mailpit:
+    image: axllent/mailpit
+    container_name: "${PROJECT_NAME}_mailpit"
     labels:
-    - "traefik.http.services.${PROJECT_NAME}_mailhog.loadbalancer.server.port=8025"
-    - "traefik.http.routers.${PROJECT_NAME}_mailhog.rule=Host(`mailhog.${PROJECT_BASE_URL}`)"
+    - "traefik.http.services.${PROJECT_NAME}_mailpit.loadbalancer.server.port=8025"
+    - "traefik.http.routers.${PROJECT_NAME}_mailpit.rule=Host(`mailpit.${PROJECT_BASE_URL}`)"
 
 #  apache:
 #    image: wodby/apache:$APACHE_TAG
@@ -117,9 +113,9 @@ services:
 #    - "traefik.http.services.${PROJECT_NAME}_varnish.loadbalancer.server.port=6081"
 #    - "traefik.http.routers.${PROJECT_NAME}_varnish.rule=Host(`varnish.${PROJECT_BASE_URL}`)"
 
-#  redis:
-#    container_name: "${PROJECT_NAME}_redis"
-#    image: wodby/redis:$REDIS_TAG
+#  valkey:
+#    container_name: "${PROJECT_NAME}_valkey"
+#    image: wodby/valkey:$VALKEY_TAG
 
 #  adminer:
 #    container_name: "${PROJECT_NAME}_adminer"
@@ -154,16 +150,9 @@ services:
 #    labels:
 #    - "traefik.http.routers.${PROJECT_NAME}_pma.rule=Host(`pma.${PROJECT_BASE_URL}`)"
 
-#  athenapdf:
-#    image: arachnysdocker/athenapdf-service:$ATHENAPDF_TAG
-#    container_name: "${PROJECT_NAME}_athenapdf"
-#    environment:
-#      WEAVER_AUTH_KEY: weaver-auth-key
-#      WEAVER_ATHENA_CMD: "athenapdf -S"
-#      WEAVER_MAX_WORKERS: 10
-#      WEAVER_MAX_CONVERSION_QUEUE: 50
-#      WEAVER_WORKER_TIMEOUT: 90
-#      WEAVER_CONVERSION_FALLBACK: "false"
+#  gotenberg:
+#    image: gotenberg/gotenberg
+#    container_name: "${PROJECT_NAME}_gotenberg"
 
 #  solr:
 #    image: wodby/solr:$SOLR_TAG
